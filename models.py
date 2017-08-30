@@ -22,10 +22,10 @@ def resize_nearest_neighbor(x, new_size):
 
 def upscale(x, scale):
 	_, h, w, _ = int_shape(x)
-	return resize_nearest_neighbour(x, (h*scale, w*scale))
+	return resize_nearest_neighbor(x, (h*scale, w*scale))
 
 
-def Build_Generator(z, n_filters):
+def Build_Generator(z, n_filters, img_size):
 
 	with tf.variable_scope('G') as vs:
 		num_output = 8*8*n_filters
@@ -37,11 +37,10 @@ def Build_Generator(z, n_filters):
 			x = slim.conv2d(x, n_filters, 3, 1, activation_fn = tf.nn.elu)
 			x = slim.conv2d(x, n_filters, 3, 1, activation_fn = tf.nn.elu)
 
-			if int_shape(x)[1] <= 8:
+			if int_shape(x)[1] >= img_size:
 				break
 
-			if i < repeat_num - 1:
-				x = upscale(x, 2)
+			x = upscale(x, 2)
 
 		out = slim.conv2d(x, 3, 3, 1, activation_fn = None)
 
@@ -65,7 +64,7 @@ def Build_Discriminator(x_real, x_fake, embedding_size, n_filters, img_size, reu
 			x = slim.conv2d(x, n_channels, 3, 1, activation_fn = tf.nn.elu)
 			x = slim.conv2d(x, n_channels, 3, 1, activation_fn = tf.nn.elu)
 
-			if int_shape(x)[1] >= img_size:
+			if int_shape(x)[1] <= 8:
 				break
 
 			x = slim.conv2d(x, n_channels, 3, 2, activation_fn = tf.nn.elu)
@@ -83,7 +82,7 @@ def Build_Discriminator(x_real, x_fake, embedding_size, n_filters, img_size, reu
 			x = slim.conv2d(x, n_filters, 3, 1, activation_fn = tf.nn.elu)
 			x = slim.conv2d(x, n_filters, 3, 1, activation_fn = tf.nn.elu)
 
-			if int_shape(x)[1] <= 8:
+			if int_shape(x)[1] >= img_size:
 				break
 
 			x = upscale(x, 2)

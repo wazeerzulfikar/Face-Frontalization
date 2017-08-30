@@ -2,7 +2,7 @@ import numpy as np
 from scipy.io import loadmat
 import os
 
-from skimage import io
+from skimage import io, transform
 
 class CelebA(object):
 
@@ -10,13 +10,13 @@ class CelebA(object):
 		self._load(path)
 
 	def _load(self, path):
-		print "Obtaining File..."
+		print ("Obtaining File...")
 		x = self.load_contents(path, 256)
 		x = x.astype('float32')
-		print x.shape
+		print (x.shape)
 		x = x / 255
 		x -= 0.5
-		print "File Obtained"
+		print ("File Obtained")
 		self.x = x
 
 	def load_contents(self, folder, batch_size):
@@ -26,7 +26,9 @@ class CelebA(object):
 			if i == batch_size:
 				break
 			if filename.endswith('jpg'):
-				imgs.append(io.imread(os.path.join(folder,filename)))
+				img = io.imread(os.path.join(folder,filename))
+				img = transform.resize(img, (64,64))
+				imgs.append(img)
 				i = i+1
 		return np.array(imgs)
 			

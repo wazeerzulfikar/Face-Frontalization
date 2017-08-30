@@ -21,20 +21,18 @@ n_channels = 3
 lr = 1e-4
 gamma = 0.5
 lambda_ = 1e-3
-k_val = 0
+k_val = 0.0
 
 n_iter = 500
 batch_size = 256
 
 data_path = args.data
 
-celeba = CelebA(data_path)
-
 x_real = tf.placeholder(tf.float32, [batch_size, image_height, image_width, n_channels])
 z = tf.placeholder(tf.float32, [batch_size, embedding_size])
 k = tf.placeholder(tf.float32)
 
-generator, g_vars = Build_Generator(z, n_filters)
+generator, g_vars = Build_Generator(z, n_filters, image_height)
 
 discriminator, d_z, d_vars = Build_Discriminator(x_real, generator, embedding_size, n_filters, image_height)
 
@@ -55,7 +53,9 @@ g_optimizer = optimizer.minimize(g_loss, var_list=g_vars)
 
 init = tf.global_variables_initializer()
 
-print "Training ..."
+celeba = CelebA(data_path)
+
+print ("Training ...")
 
 with tf.Session() as sess:
 	
@@ -66,13 +66,13 @@ with tf.Session() as sess:
 
 		batch_x = celeba.next_batch(batch_size)
 
-		_, _, d_real_loss, d_fake_loss, m_global = sess.run([d_optimizer, g_optimizer, d_real_loss, d_fake_loss, m_global],
+		_, _, d_r_loss, d_f_loss, m_global_out = sess.run([d_optimizer, g_optimizer, d_real_loss, d_fake_loss, m_global],
 			feed_dict={x_real : batch_x, z : z_value, k : k_val})
 
-		k_val = np.clip(k_val + lambda_ * ((gamma * d_real_loss) - d_fake_loss),0,1)
+		k_val = np.clip(k_val + lambda_ * ((gamma * d_r_loss) - d_f_loss), 0., 1.)
 
-		if i%100 == 0:
-			print "epoch %d : Real Loss %lf, Fake Loss %lf, m_global %lf" %(i, d_real_loss, d_fake_loss, m_global)
+		if i%1 == 0:
+			print ("epoch %d : Real Loss %lf, Fake Loss %lf, m_global %lf" %(i, d_r_loss, d_f_loss, m_global_out))
 
 
 
