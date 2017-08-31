@@ -1,3 +1,4 @@
 .floydexpt
 .floydignore
 __pycache__
+.DS_Store

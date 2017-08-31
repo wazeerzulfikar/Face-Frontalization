@@ -2,11 +2,20 @@ import numpy as np
 import tensorflow as tf
 import os
 import shutil
+import pickle
+from PIL import Image
 
 import argparse
 
 from models import *
 from data_loader import CelebA
+from utils import *
+
+###############
+# from tensorflow.examples.tutorials.mnist import input_data
+
+# mnist = input_data.read_data_sets('MNIST_data', one_hot = True)
+###############
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("--data", type=str, required=True)
@@ -26,7 +35,14 @@ k_val = 0.0
 n_iter = 500
 batch_size = 256
 
+output_dir = '/output/'
+
+if not os.path.exists(output_dir):
+    os.mkdir(output_dir)
+
 data_path = args.data
+
+celeba = CelebA(data_path, image_height)
 
 x_real = tf.placeholder(tf.float32, [batch_size, image_height, image_width, n_channels])
 z = tf.placeholder(tf.float32, [batch_size, embedding_size])
@@ -53,15 +69,13 @@ g_optimizer = optimizer.minimize(g_loss, var_list=g_vars)
 
 init = tf.global_variables_initializer()
 
-celeba = CelebA(data_path)
-
 print ("Training ...")
 
 with tf.Session() as sess:
 	
 	sess.run(init)
 
-	for i in range(n_iter):
+	for i in range(500):
 		z_value = np.random.uniform(-1, 1, (batch_size, embedding_size))
 
 		batch_x = celeba.next_batch(batch_size)
@@ -71,8 +85,13 @@ with tf.Session() as sess:
 
 		k_val = np.clip(k_val + lambda_ * ((gamma * d_r_loss) - d_f_loss), 0., 1.)
 
-		if i%1 == 0:
+
+		if i%50 == 0:
 			print ("epoch %d : Real Loss %lf, Fake Loss %lf, m_global %lf" %(i, d_r_loss, d_f_loss, m_global_out))
+
+			img = sess.run(generator, feed_dict = {z : z_value})
+			Image.fromarray(img[0].astype(np.uint8)).save(os.path.join(output_dir, "image_{}.png".format(i)))
+
 
 
 
