@@ -1,7 +1,5 @@
 import numpy as np 
 import os
-
-from PIL import Image
 from scipy import misc
 
 class CelebA(object):
@@ -12,8 +10,9 @@ class CelebA(object):
 
 	def _load(self, path):
 		print ("Obtaining File...")
-		x = self.load_contents(path, 256)
+		x = self.load_contents(path, 100000)
 		x = x.astype('float32')
+		x = x / 255
 		print ("File Obtained")
 		self.x = x
 
@@ -41,6 +40,5 @@ class CelebA(object):
 	def next_batch(self, batch_size):
 		idx = np.random.choice(len(self.x), batch_size, replace=False) 
 		return self.x[idx]
-
 
 

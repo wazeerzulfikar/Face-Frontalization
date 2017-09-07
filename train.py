@@ -1,8 +1,8 @@
+print("Start")
 import numpy as np 
 import tensorflow as tf
 import os
 import shutil
-import pickle
 from PIL import Image
 
 import argparse
@@ -44,28 +44,29 @@ data_path = args.data
 
 celeba = CelebA(data_path, image_height)
 
-x_real = tf.placeholder(tf.float32, [batch_size, image_height, image_width, n_channels])
-z = tf.placeholder(tf.float32, [batch_size, embedding_size])
-k = tf.placeholder(tf.float32)
+with tf.device("/gpu:0"):
+	x_real = tf.placeholder(tf.float32, [batch_size, image_height, image_width, n_channels])
+	z = tf.placeholder(tf.float32, [batch_size, embedding_size])
+	k = tf.placeholder(tf.float32)
 
-generator, g_vars = Build_Generator(z, n_filters, image_height)
+	generator, g_vars = Build_Generator(z, n_filters, image_height)
 
-discriminator, d_z, d_vars = Build_Discriminator(x_real, generator, embedding_size, n_filters, image_height)
+	discriminator, d_z, d_vars = Build_Discriminator(x_real, generator, embedding_size, n_filters, image_height)
 
-discriminator_real, discriminator_fake = tf.split(discriminator, 2)
+	discriminator_real, discriminator_fake = tf.split(discriminator, 2)
 
-d_real_loss = tf.reduce_mean(tf.abs(x_real - discriminator_real))
-d_fake_loss = tf.reduce_mean(tf.abs(generator - discriminator_fake))
+	d_real_loss = tf.reduce_mean(tf.abs(x_real - discriminator_real))
+	d_fake_loss = tf.reduce_mean(tf.abs(generator - discriminator_fake))
 
-d_loss = d_real_loss - k * d_fake_loss
-g_loss = d_fake_loss
+	d_loss = d_real_loss - k * d_fake_loss
+	g_loss = d_fake_loss
 
-m_global = d_real_loss + tf.abs(gamma * d_real_loss - d_fake_loss)
+	m_global = d_real_loss + tf.abs(gamma * d_real_loss - d_fake_loss)
 
-optimizer = tf.train.AdamOptimizer(lr)
+	optimizer = tf.train.AdamOptimizer(lr)
 
-d_optimizer = optimizer.minimize(d_loss, var_list=d_vars)
-g_optimizer = optimizer.minimize(g_loss, var_list=g_vars)
+	d_optimizer = optimizer.minimize(d_loss, var_list=d_vars)
+	g_optimizer = optimizer.minimize(g_loss, var_list=g_vars)
 
 init = tf.global_variables_initializer()
 
@@ -75,23 +76,22 @@ with tf.Session() as sess:
 	
 	sess.run(init)
 
-	for i in range(500):
+	for i in range(501):
 		z_value = np.random.uniform(-1, 1, (batch_size, embedding_size))
 
 		batch_x = celeba.next_batch(batch_size)
+
 
 		_, _, d_r_loss, d_f_loss, m_global_out = sess.run([d_optimizer, g_optimizer, d_real_loss, d_fake_loss, m_global],
 			feed_dict={x_real : batch_x, z : z_value, k : k_val})
 
 		k_val = np.clip(k_val + lambda_ * ((gamma * d_r_loss) - d_f_loss), 0., 1.)
 
-
 		if i%50 == 0:
 			print ("epoch %d : Real Loss %lf, Fake Loss %lf, m_global %lf" %(i, d_r_loss, d_f_loss, m_global_out))
 
 			img = sess.run(generator, feed_dict = {z : z_value})
-			Image.fromarray(img[0].astype(np.uint8)).save(os.path.join(output_dir, "image_{}.png".format(i)))
-
+			show_result(img, os.path.join(output_dir,"Image_{}.png".format(i)))
 
 
 
