@@ -76,10 +76,11 @@ with tf.Session() as sess:
 	
 	sess.run(init)
 
-	for i in range(501):
+	for i in range(101):
 		z_value = np.random.uniform(-1, 1, (batch_size, embedding_size))
 
 		batch_x = celeba.next_batch(batch_size)
+		batch_x = celeba.norm(batch_x);
 
 
 		_, _, d_r_loss, d_f_loss, m_global_out = sess.run([d_optimizer, g_optimizer, d_real_loss, d_fake_loss, m_global],
@@ -87,10 +88,11 @@ with tf.Session() as sess:
 
 		k_val = np.clip(k_val + lambda_ * ((gamma * d_r_loss) - d_f_loss), 0., 1.)
 
-		if i%50 == 0:
+		if i%10 == 0:
 			print ("epoch %d : Real Loss %lf, Fake Loss %lf, m_global %lf" %(i, d_r_loss, d_f_loss, m_global_out))
 
 			img = sess.run(generator, feed_dict = {z : z_value})
+	#		img = celeba.denorm(img)
 			show_result(img, os.path.join(output_dir,"Image_{}.png".format(i)))
 
 

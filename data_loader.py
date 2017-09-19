@@ -10,9 +10,8 @@ class CelebA(object):
 
 	def _load(self, path):
 		print ("Obtaining File...")
-		x = self.load_contents(path, 100000)
+		x = self.load_contents(path, 1000)
 		x = x.astype('float32')
-		x = x / 255
 		print ("File Obtained")
 		self.x = x
 
@@ -32,10 +31,10 @@ class CelebA(object):
 			
 
 	def norm(self, x):
-		return x - 0.5
+		return x/255
 
 	def denorm(self, x):
-		return np.clip(x + 0.5, 0, 1)
+		return np.clip((x+1)*127.5, 0, 255)
 
 	def next_batch(self, batch_size):
 		idx = np.random.choice(len(self.x), batch_size, replace=False) 
