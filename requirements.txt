@@ -7,7 +7,7 @@ clint==0.5.1
 cycler==0.10.0
 decorator==4.1.2
 floyd-cli==0.10.7
-html5lib==0.9999999
+html5lib==0.99999999
 idna==2.6
 Markdown==2.6.9
 marshmallow==2.13.6
